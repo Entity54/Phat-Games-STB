@@ -1,0 +1,5 @@
+# Ignore build artifacts from the local tests sub-crate.
+/phala_games_STB/target/
+
+# Ignore backup files creates by cargo fmt.
+/phala_games_STB/**/*.rs.bk

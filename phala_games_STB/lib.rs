@@ -34,145 +34,96 @@ mod phala_games_STB {
     #[derive(Default, Debug, Clone, scale::Encode, scale::Decode, PartialEq)]
     #[cfg_attr(feature = "std", derive(StorageLayout, scale_info::TypeInfo))]
     pub struct TicketsInfo {
-        ticket_id: u8,
+        ticket_id: u32,
         owner: Option<AccountId>,
-        tickets_coordinates: (u8, u8),
+        tickets_coordinates: (u32, u32),
         distance_from_target: u128,
+    }
+
+    #[derive(Default, Debug, Clone, scale::Encode, scale::Decode, PartialEq)]
+    #[cfg_attr(feature = "std", derive(StorageLayout, scale_info::TypeInfo))]
+    pub struct HallOfFame {
+        ticket_id: u32,
+        owner: Option<AccountId>,
+        tickets_coordinates: (u32, u32),
+        distance_from_target: u128,
+        prize_money: Balance,
+        timestamp: u64,
+        competition_number: u32,
+        start_time: u64,
+        end_time: u64,
+        number_of_tickets: u32,
+        number_of_players: u32,
     }
 
     #[derive(Debug, PartialEq, Eq, Encode, Decode)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
     pub enum Error {
-        InvalidEthAddress,
-        InvalidPrefixEthAddress,
-        InvalidLengthEthAddress,
         HttpRequestFailed,
         InvalidResponseBody,
-        BadOrigin,
-        BadgeContractNotSetUp,
-        InvalidUrl,
-        RequestFailed,
-        NoClaimFound,
-        InvalidAddressLength,
-        InvalidAddress,
-        NoPermission,
-        InvalidSignature,
-        UsernameAlreadyInUse,
-        AccountAlreadyInUse,
-        FailedToIssueBadge,
     }
 
     /// Type alias for the contract's result type.
     pub type Result<T> = core::result::Result<T, Error>;
 
-    // #[derive(SpreadAllocate)]
-    // #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
     #[ink(storage)]
-    pub struct PhalaHttpAttestationGist {
+    pub struct PhalaGamesSTB {
         admin: AccountId,
-        // attestation_verifier: attestation::Verifier,
-        // attestation_generator: attestation::Generator,
-        // linked_users: Mapping<String, ()>,
-        linked_users: Mapping<String, AccountId>,
+        // linked_users: Mapping<String, AccountId>,
         game_state: bool,
         image_hash: String,
         start_time: u64,
         end_time: u64,
         ticket_cost: Balance,
-        next_ticket_id: u8,
-        x_sum: u8,
-        y_sum: u8,
-        tickets_mapping: Mapping<u8, TicketsInfo>, //for ticket id+1123 the owner, coordinates are (x1,y1)
-        players_mapping: Mapping<AccountId, Vec<u8>>, //accountId oX12 owns tickets 1,2,3
+        next_ticket_id: u32,
+        x_sum: u32,
+        y_sum: u32,
+        tickets_mapping: Mapping<u32, TicketsInfo>, //for ticket id+1123 the owner, coordinates are (x1,y1)
+        players_mapping: Mapping<AccountId, Vec<u32>>, //accountId oX12 owns tickets 1,2,3
         players: Vec<AccountId>,
-        winners: Vec<u8>,
-        winners_addresses: Vec<AccountId>,
+        ordered_ticket_ids: Vec<u32>,
+        winners_ids: Vec<u32>,
+        balances: Mapping<AccountId, Balance>,
+        total_pot: Balance,
+        total_net_pot: Balance,
+        total_fees: Balance,
+        fees_percent: Balance,
+        competition_number: u32,
+        wisdom_of_crowd_coordinates: (u32, u32),
+        hall_of_fame_vec: Vec<HallOfFame>,
     }
 
-    #[derive(Deserialize, Encode, Clone, Debug, PartialEq)]
-    pub struct EtherscanResponse<'a> {
-        status: &'a str,
-        message: &'a str,
-        result: &'a str,
-    }
-
-    #[derive(PartialEq, Eq, Clone, Encode, Decode, Debug)]
-    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
-    pub struct GistUrl {
-        username: String,
-        gist_id: String,
-        filename: String,
-    }
-
-    // #[derive(Deserialize, Encode, Clone, Debug, PartialEq)]
-    // pub struct RandomResponse<'a> {
-    //     result: &'a str,
-    // }
-
-    #[derive(Deserialize, Encode, Clone, Debug, PartialEq)]
-    pub struct RandomResponse<'a> {
-        status: &'a str,
-        message: &'a str,
-        result: &'a str,
-    }
-
-    #[derive(Clone, Encode, Decode, Debug)]
-    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
-    pub struct GistQuote {
-        username: String,
-        account_id: AccountId,
-    }
-
-    impl PhalaHttpAttestationGist {
+    impl PhalaGamesSTB {
         #[ink(constructor)]
         pub fn new() -> Self {
-            // Create the attestation helpers
-            // let (generator, verifier) = attestation::create(b"gist-attestation-key");
-            // Save sender as the contract admin
-            // let admin = Self::env().caller();
-
             Self {
                 admin: Self::env().caller(),
-                // attestation_generator: generator,
-                // attestation_verifier: verifier,
-                linked_users: Mapping::default(),
+                // linked_users: Mapping::default(),
                 game_state: false,
                 image_hash: Default::default(),
                 start_time: Default::default(),
                 end_time: Default::default(),
-                ticket_cost: 0,
+                ticket_cost: 1_000_000_000_000,
                 next_ticket_id: 0,
                 x_sum: 0,
                 y_sum: 0,
                 tickets_mapping: Mapping::default(),
                 players_mapping: Mapping::default(),
                 players: Default::default(),
-                winners: Default::default(),
-                winners_addresses: Default::default(),
+                ordered_ticket_ids: Default::default(),
+                winners_ids: Default::default(),
+                balances: Mapping::default(),
+                total_pot: 0,
+                total_net_pot: 0,
+                total_fees: 0,
+                fees_percent: 20,
+                competition_number: 0,
+                wisdom_of_crowd_coordinates: Default::default(),
+                hall_of_fame_vec: Default::default(),
             }
-
-            // ink_lang::utils::initialize_contract(|contract: &mut Self| {
-            //     contract.admin = admin;
-            //     contract.attestation_generator = generator;
-            //     contract.attestation_verifier = verifier;
-            //     contract.linked_users = Default::default();
-            //     contract.game_state = false;
-            //     contract.image_hash = Default::default();
-            //     contract.start_time = Default::default();
-            //     contract.end_time = Default::default();
-            //     contract.ticket_cost = 0;
-            //     contract.next_ticket_id = 0;
-            //     contract.x_sum = 0;
-            //     contract.y_sum = 0;
-            //     contract.tickets_mapping = Default::default();
-            //     contract.players_mapping = Default::default();
-            //     contract.players = Default::default();
-            //     contract.winners = Default::default();
-            //     contract.winners_addresses = Default::default();
-            // })
         }
 
-        /// Configure the Game
+        /// Configure the Game  
         #[ink(message)]
         pub fn config_game(
             &mut self,
@@ -180,47 +131,98 @@ mod phala_games_STB {
             start_time: u64,
             end_time: u64,
             ticket_cost: Balance,
+            fees_percent: Balance,
         ) {
-            // assert!(
-            //     image_hash != String::from(""),
-            //     "image_hash must not be empty"
-            // );
-            // assert!(start_time < end_time, "start_time must be < end_time");
-            // assert!(
-            //     start_time > self.env().block_timestamp()
-            //         && end_time > self.env().block_timestamp(),
-            //     "start_time and end_time must be  > self.env().block_timestamp()"
-            // );
+            assert!(
+                image_hash != String::from(""),
+                "image_hash must not be empty"
+            );
+            assert!(
+                start_time < end_time || (start_time == end_time && end_time == 0),
+                "start_time must be < end_time"
+            );
+
             // assert!(ticket_cost > 0, "ticket_cost must be > 0");
 
             self.image_hash = image_hash;
-            self.start_time = start_time;
-            self.end_time = end_time;
-            self.ticket_cost = ticket_cost;
+            if start_time > 0 {
+                self.start_time = start_time;
+            } else {
+                self.start_time = self.env().block_timestamp();
+            }
+
+            if end_time > 0 {
+                self.end_time = end_time;
+            } else {
+                self.end_time = self.start_time + (10 * 60 * 1000); //10mins
+            }
+            if ticket_cost > 0 {
+                self.ticket_cost = ticket_cost;
+            }
+            if fees_percent > 0 {
+                self.fees_percent = fees_percent;
+            }
         }
 
-        /// Update Game state to start, end , call winners and payments
+        /// Update Game state to start, end , find winners and make payments
         #[ink(message)]
         pub fn check_game(&mut self) {
-            if !self.game_state && self.env().block_timestamp() > self.start_time {
+            //TO UNCOMMENT IN THE END
+            // if !self.game_state {
+            if !self.game_state
+                && self.env().block_timestamp() > self.start_time
+                && self.env().block_timestamp() < self.end_time
+            {
                 self.game_state = true;
+                self.competition_number += 1;
+                self.image_hash = Default::default();
+                self.tickets_mapping = Mapping::default();
+                self.players_mapping = Mapping::default();
+                self.players = Default::default();
+                self.ordered_ticket_ids = Default::default();
+                self.winners_ids = Default::default();
             } else if self.game_state && self.env().block_timestamp() > self.end_time {
                 self.game_state = false;
 
-                //CALL WINNERS
+                //CALCUALTE DISTANCES TO DETERMINE THE WINNER
+                self.calculate_distances();
+
+                //FIND WINNERS
+                self.find_winers(1);
+                let winning_ticket: TicketsInfo = self.get_tickets_mapping(self.winners_ids[0]);
+
+                //UPDATE HALL OF FAME
+                let winner_hof = HallOfFame {
+                    ticket_id: winning_ticket.ticket_id,
+                    owner: winning_ticket.owner,
+                    tickets_coordinates: winning_ticket.tickets_coordinates,
+                    distance_from_target: winning_ticket.distance_from_target,
+
+                    prize_money: self.total_net_pot,
+                    timestamp: self.env().block_timestamp(),
+                    competition_number: self.competition_number,
+                    start_time: self.start_time,
+                    end_time: self.end_time,
+                    number_of_tickets: self.ordered_ticket_ids.len() as u32,
+                    number_of_players: self.players.len() as u32,
+                };
+                self.hall_of_fame_vec.push(winner_hof);
+
                 //MAKE PAYMENTS
+                self.make_payments(winning_ticket.owner.unwrap());
             }
         }
 
         /// Get Game state, image_hash, start and end time and ticket cost
         #[ink(message)]
-        pub fn get_game_stats(&self) -> (bool, String, u64, u64, Balance) {
+        pub fn get_game_stats(&self) -> (bool, String, u64, u64, Balance, u32) {
             (
                 self.game_state,
                 self.image_hash.clone(),
                 self.start_time,
                 self.end_time,
                 self.ticket_cost,
+                self.competition_number,
             )
         }
 
@@ -229,72 +231,42 @@ mod phala_games_STB {
             self.env().block_timestamp()
         }
 
-        /// Get Sums For Testing Only
-        #[ink(message)]
-        pub fn get_sums(&self) -> (u8, u8) {
-            //ToDo convert to function after testing or only for Admin
-            (self.x_sum, self.y_sum)
-        }
-
-        /// Calcualte Solution
-        #[ink(message)]
-        pub fn get_wisdom_of_crowd_coordinates(&self) -> (u8, u8) {
-            //ToDo To be called only by Admin
-            let woc_x = (self.x_sum / self.next_ticket_id) as u8;
-            let woc_y = (self.y_sum / self.next_ticket_id) as u8;
-
-            (woc_x, woc_y)
-        }
-
-        /// Get all player AccountIds
+        /// Get all player AccountIds  
         #[ink(message)]
         pub fn get_players(&self) -> Vec<AccountId> {
             self.players.clone()
         }
 
-        /// Get winners Vec of TicketInfo and Vec of AccountIds
+        /// Get Sums For Testing Only  
         #[ink(message)]
-        pub fn get_winers(&self, number_of_winners: u32) -> (Vec<TicketsInfo>, Vec<AccountId>) {
-            let winners_ids = self.winners.clone();
-            // assert!(winners_ids.len() > 0, "must have at least 1 winner");
-            let mut numwinrs = number_of_winners as usize;
-            if numwinrs >= winners_ids.len() {
-                numwinrs = winners_ids.len() - 1 as usize;
-            }
-
-            // self.winners[0..=numwinrs].to_vec()
-
-            let mut winners: Vec<TicketsInfo> = Vec::new();
-            let mut winners_addresses: Vec<AccountId> = Vec::new();
-
-            // for n in 0..=numwinrs {
-            //     let winning_ticket: TicketsInfo = self.get_tickets_mapping(winners_ids[n]);
-
-            //     winners_addresses.push(winning_ticket.owner);
-            //     winners.push(winning_ticket);
-            // }
-            // // self.winners_addresses = winners_addresses;
-            // winners
-            (winners, winners_addresses)
+        pub fn get_sums(&self) -> (u32, u32) {
+            //ToDo convert to function after testing or only for Admin
+            (self.x_sum, self.y_sum)
         }
 
-        /// Get winners AccountIds for Onion payouts
+        /// For a given AccountId get all ticket Ids  
         #[ink(message)]
-        pub fn get_winners_addresses(&self) -> Vec<AccountId> {
-            self.winners_addresses.clone()
+        pub fn get_players_mapping(&self, account: AccountId) -> Vec<u32> {
+            self.players_mapping.get(&account).unwrap_or_default()
         }
 
-        /// Get all ticket coordinates
+        /// Give me ticket Id and get all ticket details  
         #[ink(message)]
-        pub fn get_all_tickets(&self) -> Vec<(u8, u8)> {
+        pub fn get_tickets_mapping(&self, ticket_id: u32) -> TicketsInfo {
+            self.tickets_mapping.get(&ticket_id).unwrap_or_default()
+        }
+
+        /// Get all ticket coordinates  
+        #[ink(message)]
+        pub fn get_all_tickets(&self) -> Vec<(u32, u32)> {
             // assert!(self.players.len() > 0, "must have at least 1 player");
-            let mut all_tickets: Vec<(u8, u8)> = Vec::new();
+            let mut all_tickets: Vec<(u32, u32)> = Vec::new();
 
             for player_address in &self.players {
-                let player_ticket_ids: Vec<u8> = self.get_players_mapping(*player_address);
+                let player_ticket_ids: Vec<u32> = self.get_players_mapping(*player_address);
 
                 for ticketid in &player_ticket_ids {
-                    let ticket_coordinates: (u8, u8) = self
+                    let ticket_coordinates: (u32, u32) = self
                         .tickets_mapping
                         .get(&ticketid)
                         .unwrap()
@@ -306,23 +278,118 @@ mod phala_games_STB {
             all_tickets
         }
 
-        /// For a given AccountId get all ticket Ids
         #[ink(message)]
-        pub fn get_players_mapping(&self, account: AccountId) -> Vec<u8> {
-            self.players_mapping.get(&account).unwrap_or_default()
+        pub fn get_ordered_ticket_ids(&self) -> Vec<u32> {
+            self.ordered_ticket_ids.clone()
         }
 
-        /// Give me ticket Id and get all ticket details
+        /// Get Solution  
         #[ink(message)]
-        pub fn get_tickets_mapping(&self, ticket_id: u8) -> TicketsInfo {
-            self.tickets_mapping.get(&ticket_id).unwrap_or_default()
+        pub fn get_wisdom_of_crowd_coordinates(&self) -> (u32, u32) {
+            self.wisdom_of_crowd_coordinates
         }
 
-        /// Submit new ticket
+        /// Calcualte Solution TO BE CALLED AFTER GAME ENDS
         #[ink(message)]
-        pub fn submit_tickets(&mut self, tickets: Vec<(u8, u8)>) -> Result<()> {
-            // assert!(tickets.len() > 0, "must have at least 1 ticket");
+        pub fn calculate_wisdom_of_crowd_coordinates(&mut self) -> (u32, u32) {
+            // fn calculate_wisdom_of_crowd_coordinates(&self) -> (u32, u32) {
+            // assert!(
+            //     self.env().block_timestamp() > self.end_time,
+            //     "only to run after game expires"
+            // );
+
+            //ToDo To be called only by Admin and only after game ends
+            let woc_x = (self.x_sum / self.next_ticket_id) as u32;
+            let woc_y = (self.y_sum / self.next_ticket_id) as u32;
+            self.wisdom_of_crowd_coordinates = (woc_x, woc_y);
+            (woc_x, woc_y)
+        }
+
+        /// Find winners ticket ids TO TEST AGAIN
+        #[ink(message)]
+        pub fn find_winers(&mut self, number_of_winners: u32) {
+            // fn find_winers(&mut self, number_of_winners: u32) {
+
+            let possible_winners_ids = self.ordered_ticket_ids.clone();
+            assert!(
+                possible_winners_ids.len() > 0,
+                "must have at least 1 ticket"
+            );
+
+            let mut numwinrs = (number_of_winners - 1) as usize;
+            if numwinrs >= possible_winners_ids.len() {
+                numwinrs = possible_winners_ids.len() - 1 as usize;
+            }
+
+            let mut winners_ids: Vec<u32> = Vec::new();
+
+            for n in 0..=numwinrs {
+                let winning_ticket: TicketsInfo = self.get_tickets_mapping(possible_winners_ids[n]);
+                winners_ids.push(winning_ticket.ticket_id);
+            }
+
+            self.winners_ids = winners_ids;
+        }
+
+        /// Get winnign tickets TO TEST AGAIN
+        #[ink(message)]
+        pub fn get_winning_tickets(&self) -> Vec<TicketsInfo> {
+            let winners_ids = self.winners_ids.clone();
+            assert!(winners_ids.len() > 0, "must have at least 1 winner");
+
+            let mut winning_tickets: Vec<TicketsInfo> = Vec::new();
+
+            for n in 0..winners_ids.len() {
+                let winning_ticket: TicketsInfo = self.get_tickets_mapping(winners_ids[n]);
+                winning_tickets.push(winning_ticket);
+            }
+            winning_tickets
+        }
+
+        /// Get winners Vec of AccountIds TO TEST AGAIN
+        #[ink(message)]
+        pub fn get_winners_addresses(&self) -> Vec<AccountId> {
+            let winners_ids = self.winners_ids.clone();
+            assert!(winners_ids.len() > 0, "must have at least 1 winner");
+
+            let mut winners_addresses: Vec<AccountId> = Vec::new();
+
+            for n in 0..winners_ids.len() {
+                let winning_ticket: TicketsInfo = self.get_tickets_mapping(winners_ids[n]);
+
+                winners_addresses.push(winning_ticket.owner.unwrap());
+            }
+            winners_addresses
+        }
+
+        /// Submit new ticket  
+        #[ink(message, payable)]
+        pub fn submit_tickets(&mut self, tickets: Vec<(u32, u32)>) -> Result<()> {
+            assert!(tickets.len() > 0, "must have at least 1 ticket");
             let caller: AccountId = self.env().caller();
+            let endowment = self.env().transferred_value();
+            //ticket_cost = 1_000_000_000_000
+            let expected_value = (tickets.len() as u128) * self.ticket_cost;
+            ink::env::debug_println!(
+                "endowment {:?} expected_value {:?} ",
+                endowment,
+                expected_value
+            );
+            assert!(endowment == expected_value, "ticket are not paid");
+
+            let balance = self.balances.get(caller).unwrap_or(0);
+            self.balances.insert(caller, &(balance + endowment));
+
+            self.total_pot += self.env().transferred_value();
+            self.total_fees = (self.total_pot / 100) * self.fees_percent;
+            self.total_net_pot = self.total_pot - self.total_fees;
+
+            ink::env::debug_println!(
+                "total_pot: {} total_net_pot: {} total_fees: {} ",
+                self.total_pot,
+                self.total_net_pot,
+                self.total_fees
+            );
 
             //Add Player
             if !self.players.contains(&caller) {
@@ -338,50 +405,50 @@ mod phala_games_STB {
                 );
             }
 
-            // //Get players ticket_ids
-            // let mut player_ticketids = self.get_players_mapping(caller);
+            //Get players ticket_ids
+            let mut player_ticketids = self.get_players_mapping(caller);
 
-            // for ticket in tickets {
-            //     self.next_ticket_id += 1;
-            //     let ticket_info = TicketsInfo {
-            //         ticket_id: self.next_ticket_id,
-            //         owner: caller,
-            //         tickets_coordinates: ticket,
-            //         distance_from_target: 0,
-            //     };
+            for ticket in tickets {
+                self.next_ticket_id += 1;
+                let ticket_info = TicketsInfo {
+                    ticket_id: self.next_ticket_id,
+                    owner: Some(caller),
+                    tickets_coordinates: ticket,
+                    distance_from_target: 0,
+                };
 
-            //     //Add ticket tickets_mapping
-            //     self.tickets_mapping
-            //         .insert(&self.next_ticket_id, &ticket_info);
-            //     //Collect fresh ticket ids
-            //     player_ticketids.push(self.next_ticket_id);
-            //     //Update sums
-            //     self.x_sum += ticket.0;
-            //     self.y_sum += ticket.1;
-            // }
-            // //Add new ticket_ids to existing ones
-            // self.players_mapping.insert(&caller, &player_ticketids);
+                //Add ticket tickets_mapping
+                self.tickets_mapping
+                    .insert(&self.next_ticket_id, &ticket_info);
+                //Collect fresh ticket ids
+                player_ticketids.push(self.next_ticket_id);
+                //Update sums
+                self.x_sum += ticket.0;
+                self.y_sum += ticket.1;
+            }
+            //Add new ticket_ids to existing ones
+            self.players_mapping.insert(&caller, &player_ticketids);
 
             Ok(())
         }
 
-        /// Calculate distances of tickets from solution
+        /// Calculate distances of tickets from solution  
         #[ink(message)]
         pub fn calculate_distances(&mut self) {
             // assert!(self.players.len() > 0, "must have at least 1 player");
-            let (woc_x, woc_y) = self.get_wisdom_of_crowd_coordinates();
+            let (woc_x, woc_y) = self.calculate_wisdom_of_crowd_coordinates();
 
             let mut all_tickets: Vec<TicketsInfo> = Vec::new();
 
             for player_address in &self.players {
-                let player_ticket_ids: Vec<u8> = self.get_players_mapping(*player_address);
+                let player_ticket_ids: Vec<u32> = self.get_players_mapping(*player_address);
 
                 for ticketid in &player_ticket_ids {
                     let mut tickt: TicketsInfo = self.tickets_mapping.get(&ticketid).unwrap();
-                    let (t_x, t_y): (u8, u8) = tickt.tickets_coordinates;
-                    let vert_dist: u8 = u8::pow((t_x - woc_x), 2);
-                    let horiz_dist: u8 = u8::pow((t_y - woc_y), 2);
-                    let sum_of_squares: u32 = (vert_dist + horiz_dist) as u32;
+                    let (t_x, t_y): (u32, u32) = tickt.tickets_coordinates;
+                    let vert_dist: u32 = u32::pow((t_x - woc_x), 2);
+                    let horiz_dist: u32 = u32::pow((t_y - woc_y), 2);
+                    let sum_of_squares: u32 = (vert_dist + horiz_dist); // as u32;
                     let d1 = FixedU128::from_u32(sum_of_squares);
                     let d2 = FixedU128::sqrt(d1);
                     let distance = *d2.encode_as();
@@ -396,76 +463,119 @@ mod phala_games_STB {
             }
 
             all_tickets.sort_by_key(|d| d.distance_from_target);
-            let mut winners_ids: Vec<u8> = Vec::new();
+            let mut winners_ids: Vec<u32> = Vec::new();
             for n in 0..=(all_tickets.len() - 1) {
                 winners_ids.push(all_tickets[n].ticket_id);
             }
-            self.winners = winners_ids;
+            // self.winners = winners_ids;
+            self.ordered_ticket_ids = winners_ids;
         }
 
-        // /// The attestation generator
-        // #[ink(message)]
-        // pub fn get_attestation_generator(&self) -> attestation::Generator {
-        //     self.attestation_generator.clone()
-        // }
-
-        // /// The attestation verifier
-        // #[ink(message)]
-        // pub fn get_attestation_verifier(&self) -> attestation::Verifier {
-        //     self.attestation_verifier.clone()
-        // }
-
-        /// Admin of sc
+        /// Admin of sc  
         #[ink(message)]
         pub fn get_admin(&self) -> AccountId {
             self.admin.clone()
         }
 
-        /// Get square root
-        #[ink(message)]
-        pub fn get_squareroot(&self, num: u32) -> u128 {
+        /// Get square root  
+        // #[ink(message)]
+        // pub fn get_squareroot(&self, num: u32) -> u128 {
+        fn get_squareroot(num: u32) -> u128 {
             let d1 = FixedU128::from_u32(num);
             let d2 = FixedU128::sqrt(d1);
             let d3 = *d2.encode_as();
             d3
         }
 
-        /// Http call to get a random integer
+        /// Retrieve the balance of the caller.
         #[ink(message)]
-        pub fn get_random_int(&self, min: u8, max: u8) -> Result<String> {
-            let resp = http_get!(format!(
-                "https://www.random.org/integers/?num=1&min={}&max={}&col=1&base=10&format=plain&rnd=new",
-                min, max
-            ));
-
-            if resp.status_code != 200 {
-                return Err(Error::HttpRequestFailed);
+        pub fn get_balance(&self, account: Option<AccountId>) -> Balance {
+            let mut caller = self.env().caller();
+            if account != None {
+                caller = account.unwrap();
             }
-
-            let result: RandomResponse = serde_json_core::from_slice(&resp.body)
-                .or(Err(Error::InvalidResponseBody))?
-                .0;
-            Ok(String::from(result.result))
-            // Ok((result.result).parse::<u8>().unwrap())
-            // Ok(result.result)
+            self.balances.get(caller).unwrap()
         }
 
-        /// Parses a Github Gist url.
-        /// - Returns a parsed [GistUrl] struct if the input is a valid url;
-        /// - Otherwise returns an [Error].
-        fn parse_ranmdom_url(url: &str) -> Result<GistUrl> {
-            let path = url
-                .strip_prefix("https://gist.githubusercontent.com/")
-                .ok_or(Error::InvalidUrl)?;
-            let components: Vec<_> = path.split('/').collect();
-            if components.len() < 5 {
-                return Err(Error::InvalidUrl);
-            }
-            Ok(GistUrl {
-                username: components[0].to_string(),
-                gist_id: components[1].to_string(),
-                filename: components[4].to_string(),
-            })
+        /// get_existential_deposit  
+        #[ink(message)]
+        pub fn get_existential_deposit(&self) -> Balance {
+            self.env().minimum_balance() //1
+        }
+
+        /// check if accoutn is a contract  
+        #[ink(message)]
+        pub fn account_is_contract(&self, account: AccountId) -> bool {
+            self.env().is_contract(&account)
+        }
+
+        /// get contract balance  
+        #[ink(message)]
+        pub fn get_contract_balance(&self) -> Balance {
+            self.env().balance()
+        }
+
+        /// get_total_pot inclusive of fees
+        #[ink(message)]
+        pub fn get_total_pot(&self) -> Balance {
+            self.total_pot
+        }
+
+        /// total_net_pot
+        #[ink(message)]
+        pub fn get_total_net_pot(&self) -> Balance {
+            self.total_net_pot
+        }
+
+        /// total_fees
+        #[ink(message)]
+        pub fn get_total_fees(&self) -> Balance {
+            self.total_fees
+        }
+
+        /// fees_percent by default 20 for 20%
+        #[ink(message)]
+        pub fn get_fees_percent(&self) -> Balance {
+            self.fees_percent
+        }
+
+        fn make_payments(&mut self, account: AccountId) {
+            ink::env::debug_println!(
+                "pay_winners> caller {:?} this_contract: {:?} winnerAddress: {:?}",
+                self.env().caller(),
+                self.env().account_id(),
+                account
+            );
+            let fess_to_transfer =
+                self.env().balance() - self.total_net_pot - self.get_existential_deposit();
+            self.env().transfer(account, self.total_net_pot).unwrap();
+            self.env().transfer(self.admin, fess_to_transfer).unwrap();
+            self.reset_game();
+        }
+
+        fn reset_game(&mut self) {
+            self.game_state = false;
+            // self.image_hash = Default::default();
+            self.start_time = Default::default();
+            self.end_time = Default::default();
+            self.next_ticket_id = 0;
+            self.x_sum = 0;
+            self.y_sum = 0;
+            // self.tickets_mapping = Mapping::default();
+            // self.players_mapping = Mapping::default();
+            // self.players = Default::default();
+            // self.ordered_ticket_ids = Default::default();
+            // self.winners_ids = Default::default();
+            self.balances = Mapping::default();
+            self.total_pot = 0;
+            self.total_net_pot = 0;
+            self.total_fees = 0;
+        }
+
+        // Get Hall of Fame of past winners
+        #[ink(message)]
+        pub fn get_hall_of_fame(&self) -> Vec<HallOfFame> {
+            self.hall_of_fame_vec.clone()
         }
     }
 }

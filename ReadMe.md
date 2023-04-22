@@ -80,7 +80,7 @@ Finally the remaining amount of minutes in the game is shown
 
 <br>
 
-![plot](./Printscreens/FE_GameInProgress.png)
+![plot](./Printscreens/FEGameInProgress.png)
 
 <br>
 

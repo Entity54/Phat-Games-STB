@@ -1,4 +1,4 @@
-# ** Phala Game Competions - Spot the Ball**
+# Phala Game Competions - Spot the Ball
 
 <br>
 

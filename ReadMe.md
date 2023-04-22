@@ -78,7 +78,11 @@ The Start and End time show when the game started and when it will be completed
 
 Finally the remaining amount of minutes in the game is shown
 
+<br>
+
 ![plot](./Printscreens/FE_GameInProgress.png)
+
+<br>
 
 Once a new game has started a fresh image is loaded which has the ball digitally removed
 
@@ -90,19 +94,31 @@ Each time the user clicks on the image he should click the Play button to genera
 
 When he is ready he can click Submit to submit his tickets. The total cost in PHA is shown next to the submit button
 
+<br>
+
 ![plot](./Printscreens/FE_PlayTickets.png)
 
-The Pot Size shows the toal PHA that have been deposited
+<br>
+
+The Pot Size shows the total PHA that have been deposited
 
 The Payout is 80% of the Pot Size and the Fees (20%) is for the owner of the game.
 
+<br>
+
 ![plot](./Printscreens/FE_PotSize.png)
+
+<br>
 
 When the game expires the Number of tickets played in the current game is shown underneath the Start button
 
-The winner of the game along with previous winners are shown in the seond tab Hall of Fame with all relvant details e.g. owener of the ticketm winning coordinates, competition id, number of players (account addresses), number of ticketsand the Prize Money won
+The winner of the game along with previous winners are shown in the second tab Hall of Fame with all relevant details e.g. owener of the ticket winning coordinates, competition id, number of players (account addresses), number of tickets and the Prize Money won
+
+<br>
 
 ![plot](./Printscreens/FE_GameEnded_Tickets_HallofFame.png)
+
+<br>
 
 When the competition completes in the SpotTheBall page we can see the solution: "Wisdom of the Crowd Answer" and the winning ticket coordinates
 
@@ -112,7 +128,11 @@ The wisdom of the crowd dictates that the more tickets played, the closer the av
 
 Therefore the winning ticket is the one with the smallest distance to the Wisdom of the Crowd Answer
 
+<br>
+
 ![plot](./Printscreens/FE_WisdomWinner.png)
+
+<br>
 
 <br>
 <br>
@@ -123,7 +143,11 @@ Therefore the winning ticket is the one with the smallest distance to the Wisdom
 
 ---
 
+<br>
+
 ![plot](./Printscreens/Phat-Contract-CB-UI-1.png)
+
+<br>
 
 By clicking the Start button in the front end in essence we call config_game function passing the imagehash (to be loaded from 4everland in next relase) the start and end time of th egame the ticket cost and fees percentage. The default ticket cost is 1 PHA and the default fees percentage is 20 for 20%
 
@@ -149,7 +173,11 @@ The get_all_tickets retireves all the ticket coordiantes played and the get_orde
 
 The get_sums query retrieves the runnign sum for x and y coordinates that is calcualted eveytime a new ticket(s) is played
 
+<br>
+
 ![plot](./Printscreens/Phat-Contract-CB-UI-2.png)
+
+<br>
 
 calculate_wisdom_of_crowd_coordinates calculates the average of x and y coordiantes of all tickets and it is viewable by calling get_wisdom_of_crowd_coordinates
 

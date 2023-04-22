@@ -80,7 +80,7 @@ Finally the remaining amount of minutes in the game is shown
 
 <br>
 
-![plot](./Printscreens/FEGameInProgress.png)
+![plot](./PrintScreens/FEGameInProgress.png)
 
 <br>
 
@@ -96,7 +96,7 @@ When he is ready he can click Submit to submit his tickets. The total cost in PH
 
 <br>
 
-![plot](./Printscreens/FE_PlayTickets.png)
+![plot](./PrintScreens/FE_PlayTickets.png)
 
 <br>
 
@@ -106,7 +106,7 @@ The Payout is 80% of the Pot Size and the Fees (20%) is for the owner of the gam
 
 <br>
 
-![plot](./Printscreens/FE_PotSize.png)
+![plot](./PrintScreens/FE_PotSize.png)
 
 <br>
 
@@ -116,7 +116,7 @@ The winner of the game along with previous winners are shown in the second tab H
 
 <br>
 
-![plot](./Printscreens/FE_GameEnded_Tickets_HallofFame.png)
+![plot](./PrintScreens/FE_GameEnded_Tickets_HallofFame.png)
 
 <br>
 
@@ -130,7 +130,7 @@ Therefore the winning ticket is the one with the smallest distance to the Wisdom
 
 <br>
 
-![plot](./Printscreens/FE_WisdomWinner.png)
+![plot](./PrintScreens/FE_WisdomWinner.png)
 
 <br>
 
@@ -145,7 +145,7 @@ Therefore the winning ticket is the one with the smallest distance to the Wisdom
 
 <br>
 
-![plot](./Printscreens/Phat-Contract-CB-UI-1.png)
+![plot](./PrintScreens/Phat-Contract-CB-UI-1.png)
 
 <br>
 
@@ -175,7 +175,7 @@ The get_sums query retrieves the runnign sum for x and y coordinates that is cal
 
 <br>
 
-![plot](./Printscreens/Phat-Contract-CB-UI-2.png)
+![plot](./PrintScreens/Phat-Contract-CB-UI-2.png)
 
 <br>
 
